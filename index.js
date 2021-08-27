@@ -6,11 +6,11 @@ const settings = require("./serverSettings.json");
 const modmails = require("./modmails.json");
 const disbut = require("discord-buttons");
 const discaudio = require("discaudio");
-const disbutpages = require("discord-embeds-pages-buttons");
 const reactionRoles = require("./reactionRoles.json");
 disbut(client);
 const fetch = require("node-fetch");
 const fs = require("fs");
+const dispages = require("discord.js-embed-pages");
 var prefix = settings.prefix;
 const colour = "RANDOM";
 client.on("ready", () => {
@@ -24,7 +24,7 @@ client.on("ready", () => {
 client.on("message", async (message) => {
   var prefix = settings.prefix;
   const args = message.content.toLowerCase().split(" ");
-  if (!args[1] && message.mentions.users.first() == client.user) {
+  if (!args[1] && message.mentions.users.first() === client.user) {
     const embed = new Discord.MessageEmbed()
       .setColor(colour)
       .setAuthor(client.user.tag, client.user.avatarURL({ dynamic: true }))
@@ -36,12 +36,12 @@ client.on("message", async (message) => {
   }
   if (
     message.author.bot ||
-    message.channel.type == "dm" ||
-    args[0][0] != settings.prefix
+    message.channel.type === "dm" ||
+    !args[0].startsWith(settings.prefix)
   )
     return;
   discaudio.music(message, client, prefix, {});
-  if (["help", "h"].find((k) => prefix + k == args[0])) {
+  if (["help", "h"].find((k) => prefix + k === args[0])) {
     const menu = new Discord.MessageEmbed()
       .setColor(colour)
       .setAuthor(
@@ -105,24 +105,11 @@ client.on("message", async (message) => {
         `**${prefix}help:** Displays this embed\n**${prefix}ping:** Displays the bots latency to Discord\n**${prefix}avatar [@user]:** Displays the avatar of the mentioned user/person who ran the command`
       );
     var pages = [menu, embed1, embed2, embed3, embed4];
-    disbutpages.pages(
-      client,
-      message,
-      pages,
-      100000,
-      disbut,
-      "green",
-      "red",
-      "⏩",
-      "⏪",
-      "❌",
-      "Forward",
-      "Backward",
-      "Delete",
-      []
-    );
-  } else if (["modmail", "mm"].find((k) => prefix + k == args[0])) {
-    if (!message.member.roles.cache.find((k) => k.id == "863405388296355870"))
+    try {
+      dispages.buttonFlick(message, pages);
+    } catch (err) {}
+  } else if (["modmail", "mm"].find((k) => prefix + k === args[0])) {
+    if (!message.member.roles.cache.find((k) => k.id === "880806446806216844"))
       return message.channel.send(
         "You must be support to use mod mail commands!"
       );
@@ -138,7 +125,7 @@ client.on("message", async (message) => {
           `**${prefix}modmail close:** Closes the modmail thread in the channel the command is sent in.`
         );
       message.channel.send(embed);
-    } else if (args[1] == "close") {
+    } else if (args[1] === "close") {
       if (!modmails.mails.find((k) => k.channelID == message.channel.id))
         return message.channel.send("This channel is not a modmail channel!");
       var reason = args.slice(2).join(" ");
@@ -160,7 +147,7 @@ client.on("message", async (message) => {
       user.send(embed);
       message.channel.send(embed);
       modmails.mails.splice(
-        modmails.mails.findIndex((k) => k.id == user.id),
+        modmails.mails.findIndex((k) => k.id === user.id),
         1
       );
       fs.writeFile("./modmails.json", JSON.stringify(modmails), function () {
@@ -168,7 +155,7 @@ client.on("message", async (message) => {
       });
       await message.channel.delete(`ModMail solved reason: ${reason}`);
       message.guild.channels.cache
-        .find((k) => k.id == settings.modmailChannel)
+        .find((k) => k.id === settings.modmailChannel)
         .send(embed);
       return;
     }
@@ -233,7 +220,7 @@ Manage Members`);
       roleID: message.mentions.roles.first().id
     };
     reactionRoles.push(reactionSetup);
-    fs.writeFile(fileName, JSON.stringify(file), function writeJSON(err) {
+    fs.writeFile("./reactionRoles.json", JSON.stringify(reactionRoles), function writeJSON(err) {
       if (err) return console.log(err);
     });
     message.channel.send("Reaction role setup.");
@@ -351,7 +338,7 @@ Manage Members`);
     } catch (error) {
       message.channel.send(`An error has occurred.\n${error}/`);
     }
-  } else if ([`serverinfo`, `si`].find((k) => prefix + k == args[0])) {
+  } else if ([`serverinfo`, `si`].find((k) => prefix + k === args[0])) {
     const embed = new Discord.MessageEmbed()
       .setColor(colour)
       .setAuthor(`${message.guild}'s Information`, message.guild.iconURL())
@@ -368,7 +355,7 @@ Manage Members`);
         true
       );
     message.channel.send(embed);
-  } else if ([`animal`].find((k) => prefix + k == args[0])) {
+  } else if ([`animal`].find((k) => prefix + k === args[0])) {
     const animalImage = [
       { animal: "dog", api: "https://some-random-api.ml/img/dog" },
       { animal: "cat", api: "https://some-random-api.ml/img/cat" },
@@ -771,7 +758,7 @@ client.on("messageReactionAdd", async (reaction, user) => {
 
 client.on("guildMemberAdd", async (member) => {
   var channel = member.guild.channels.cache.find(
-    (k) => k.id == settings.welcomeChannel
+    (k) => k.id === settings.welcomeChannel
   );
   const embed = new Discord.MessageEmbed()
     .setColor("GREEN")
@@ -789,7 +776,7 @@ client.on("guildMemberAdd", async (member) => {
 
 client.on("guildMemberRemove", async (member) => {
   var channel = member.guild.channels.cache.find(
-    (k) => k.id == settings.welcomeChannel
+    (k) => k.id === settings.welcomeChannel
   );
   const embed = new Discord.MessageEmbed()
     .setColor("#ff0000")
@@ -809,8 +796,8 @@ client.on("guildMemberRemove", async (member) => {
 client.on("message", async (message) => {
   if (
     message.author.bot ||
-    message.channel.type != "text" ||
-    !modmails.mails.find((k) => k.channelID == message.channel.id) ||
+    message.channel.type !== "text" ||
+    !modmails.mails.find((k) => k.channelID === message.channel.id) ||
     message.content.startsWith(prefix)
   )
     return;
@@ -838,8 +825,8 @@ client.on("message", async (message) => {
 
 //modmail from dm
 client.on("message", async (message) => {
-  if (message.author.bot || message.channel.type != "dm") return;
-  if (!modmails.mails.find((k) => k.id == message.author.id)) {
+  if (message.author.bot || message.channel.type !== "dm") return;
+  if (!modmails.mails.find((k) => k.id === message.author.id)) {
     const yeBut = new disbut.MessageButton()
       .setStyle("green")
       .setLabel("Create New Thread")
@@ -858,10 +845,11 @@ client.on("message", async (message) => {
     const row = new disbut.MessageActionRow().addComponents([yeBut, noBut]);
     var m = await message.channel.send({ embed: embed, components: [row] });
   } else {
-    var guild = client.guilds.cache.find((k) => k.id == 859833614124449832);
+    var guild = client.guilds.cache.find((k) => k.id === "880805780637515866");
     var channel = guild.channels.cache.find(
       (k) =>
-        k.id == modmails.mails.find((l) => l.id == message.author.id).channelID
+        k.id ===
+        modmails.mails.find((l) => l.id === message.author.id).channelID
     );
     const embed = new Discord.MessageEmbed()
       .setColor(colour)
@@ -895,9 +883,9 @@ try {
     }
     try {
       if (
-        button.id.split("^")[0] == `createThread` &&
-        button.id.split("^")[1] == `${button.clicker.user.id}` &&
-        !modmails.mails.find((k) => k.id == button.id.split("^")[1])
+        button.id.split("^")[0] === `createThread` &&
+        button.id.split("^")[1] === `${button.clicker.user.id}` &&
+        !modmails.mails.find((k) => k.id === button.id.split("^")[1])
       ) {
         button.message.channel.send(
           "Your modmail thread has been created, please send details of your reason for opening. Support will be with you soon"
@@ -918,16 +906,18 @@ async function createModmail(message) {
     id: message.author.id,
     number: modmails.cases + 1
   };
-  var guild = client.guilds.cache.find((k) => k.id == 859833614124449832);
+  var guild = await client.guilds.cache.find(
+    (k) => k.id === "880805780637515866"
+  );
   var ch = await guild.channels.create(message.author.tag, {
     topic: `ModMail for ${message.author.tag} ${message.author.id}`,
     nsfw: false,
-    parent: "863925484760465418",
+    parent: "880864208617611324",
     reason: `ModMail started for ${message.author.tag} ${message.author.id}`
   });
   js.channelID = ch.id;
   var channel = guild.channels.cache.find(
-    (k) => k.id == settings.modmailChannel
+    (k) => k.id === settings.modmailChannel
   );
   const embed = new Discord.MessageEmbed()
     .setColor(colour)
@@ -956,4 +946,4 @@ async function createModmail(message) {
     await ch.send({ files: message.attachments.array() });
   }
 }
-client.login(process.env.TOKEN)
+client.login(process.env.TOKEN);
